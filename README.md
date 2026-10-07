@@ -1,4 +1,4 @@
-# af-credmon v0.1.0
+# af-credmon v0.1.1
 
 [![Actions Status][actions-badge]][actions-link]
 [![Documentation Status][rtd-badge]][rtd-link]
@@ -43,7 +43,7 @@ Install it as a pixi environment:
 
 ```bash
 git clone https://github.com/maniaclab/af-credmon /opt/af-credmon
-cd /opt/af-credmon && git checkout v0.1.0 && pixi install
+cd /opt/af-credmon && git checkout v0.1.1 && pixi install
 # -> /opt/af-credmon/.pixi/envs/default/bin/af-credmon
 ```
 
@@ -151,7 +151,7 @@ pixi run lint              # pre-commit hooks
 To release, bump the version, commit and tag in one step, then push:
 
 ```bash
-pixi run -e dev tbump 0.1.0
+pixi run -e dev tbump 0.1.1
 ```
 
 <!-- prettier-ignore-start -->
