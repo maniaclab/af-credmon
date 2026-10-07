@@ -4,7 +4,7 @@ Started by condor_master, typically as ``CREDMON_OAUTH``::
 
     DAEMON_LIST = $(DAEMON_LIST) CREDD CREDMON_OAUTH
     CREDMON_OAUTH = /opt/af-credmon/.pixi/envs/default/bin/af-credmon
-    CREDMON_OAUTH_ARGS = --broker-url https://mcp.example.org
+    CREDMON_OAUTH_ARGS = --broker-url https://mcp.example.org --log-file $(LOG)/AfCredmonLog
 
 ``--mode primary`` (the default) is the credmon credd talks to: it owns
 ``<creddir>/pid`` (credd SIGHUPs that pid after every store), touches
@@ -137,6 +137,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "twice HTCondor's default SEC_CREDENTIAL_REFRESH)",
     )
     parser.add_argument("--log-level", default="INFO")
+    parser.add_argument(
+        "--log-file",
+        type=Path,
+        help="append logs to this file (condor_master does not capture a daemon's stderr); "
+        "default: stderr",
+    )
     args = parser.parse_args(argv)
     if args.cred_dir is None:
         args.cred_dir = _default_cred_dir()
@@ -166,12 +172,23 @@ async def _amain(args: argparse.Namespace) -> None:
     log.info("af-credmon stopped")
 
 
+def configure_logging(args: argparse.Namespace) -> None:
+    """Log to ``--log-file`` when given, otherwise to stderr."""
+    handler: logging.Handler = (
+        logging.FileHandler(args.log_file)
+        if args.log_file
+        else logging.StreamHandler(sys.stderr)
+    )
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+    )
+    root = logging.getLogger()
+    root.addHandler(handler)
+    root.setLevel(args.log_level.upper())
+
+
 def main(argv: Sequence[str] | None = None) -> None:
     """Console entry point."""
     args = parse_args(argv)
-    logging.basicConfig(
-        level=args.log_level.upper(),
-        stream=sys.stderr,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
+    configure_logging(args)
     asyncio.run(_amain(args))

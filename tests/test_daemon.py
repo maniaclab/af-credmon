@@ -10,12 +10,13 @@ those files, so it only polls.
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 import pytest
 
-from af_credmon.daemon import Daemon, parse_args
+from af_credmon.daemon import Daemon, configure_logging, parse_args
 from af_credmon.monitor import ScanReport
 
 if TYPE_CHECKING:
@@ -162,3 +163,33 @@ def test_parse_args_rejects_unknown_mode(tmp_path: Path) -> None:
                 "sideways",
             ]
         )
+
+
+def test_log_file_option_sends_logs_to_that_file(tmp_path: Path) -> None:
+    """condor_master does not capture a daemon's stderr; like
+    condor_credmon_oauth's CREDMON_OAUTH_LOG, the credmon needs its own log."""
+    log_file = tmp_path / "AfCredmonLog"
+    args = parse_args(
+        [
+            "--broker-url",
+            "https://x",
+            "--cred-dir",
+            str(tmp_path),
+            "--log-file",
+            str(log_file),
+        ]
+    )
+    root = logging.getLogger()
+    before = list(root.handlers)
+    try:
+        configure_logging(args)
+        logging.getLogger("af_credmon.test").warning("hello from the credmon")
+        for handler in root.handlers:
+            handler.flush()
+    finally:
+        for handler in root.handlers[:]:
+            if handler not in before:
+                root.removeHandler(handler)
+                handler.close()
+
+    assert "hello from the credmon" in log_file.read_text()
