@@ -11,7 +11,7 @@ description = "HTCondor credmon that exchanges AF MCP broker top tokens for per-
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
@@ -20,10 +20,10 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Scientific/Engineering",
   "Typing :: Typed",
 ]
@@ -50,6 +50,9 @@ test = [
 ]
 dev = [
   { include-group = "test" },
+]
+docs = [
+    "zensical>=0.0.20",
 ]
 
 [tool.hatch]
@@ -81,7 +84,7 @@ report.exclude_also = [
 
 [tool.mypy]
 files = ["src", "tests"]
-python_version = "3.10"
+python_version = "3.11"
 warn_unused_configs = true
 strict = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
@@ -122,3 +125,21 @@ ignore = [
 
 [tool.codespell]
 ignore-words-list = "ccache"
+
+[tool.pylint]
+py-version = "3.11"
+ignore-paths = [".*/_version.py"]
+reports.output-format = "colorized"
+similarities.ignore-imports = "yes"
+messages_control.disable = [
+  "broad-exception-caught",
+  "design",
+  "duplicate-code",
+  "fixme",
+  "line-too-long",
+  "missing-module-docstring",
+  "missing-function-docstring",
+  "wrong-import-order",
+  "ungrouped-imports",
+  "wrong-import-position",
+]

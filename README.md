@@ -1,5 +1,17 @@
 # af-credmon v0.1.0
 
+[![Actions Status][actions-badge]][actions-link]
+[![Documentation Status][rtd-badge]][rtd-link]
+
+[![PyPI version][pypi-version]][pypi-link]
+[![PyPI platforms][pypi-platforms]][pypi-link]
+
+[![GitHub Discussion][github-discussions-badge]][github-discussions-link]
+
+[![Coverage][coverage-badge]][coverage-link]
+
+<!-- --8<-- [start:intro] -->
+
 An HTCondor credential monitor (credmon) that places a user's AF MCP broker-held
 credentials -- x509/VOMS proxy, CERN Kerberos ticket, ServiceX access token --
 on worker nodes, without the job submitter (human or LLM agent) ever handling
@@ -20,6 +32,10 @@ short:
    (a VOMS proxy PEM) on the worker node, refreshed by HTCondor every
    `SEC_CREDENTIAL_REFRESH` (default 300s).
 
+<!-- --8<-- [end:intro] -->
+
+<!-- --8<-- [start:installation] -->
+
 ## Installing on the access point
 
 af-credmon runs as root on the access point (the schedd host), next to credd.
@@ -27,9 +43,19 @@ Install it as a pixi environment:
 
 ```bash
 git clone https://github.com/maniaclab/af-credmon /opt/af-credmon
-cd /opt/af-credmon && pixi install
+cd /opt/af-credmon && git checkout v0.1.0 && pixi install
 # -> /opt/af-credmon/.pixi/envs/default/bin/af-credmon
 ```
+
+or into any Python 3.11+ environment that has the HTCondor Python bindings:
+
+```bash
+pip install af-credmon
+```
+
+<!-- --8<-- [end:installation] -->
+
+<!-- --8<-- [start:usage] -->
 
 ## HTCondor configuration
 
@@ -112,6 +138,8 @@ export X509_USER_PROXY="${_CONDOR_CREDS}/af_x509.use"
 and never `cat`, `base64` or `echo` them. Keep `SEC_DEBUG_PRINT_KEYS` off on the
 access point; it writes credentials into the ShadowLog.
 
+<!-- --8<-- [end:usage] -->
+
 ## Development
 
 ```bash
@@ -125,3 +153,17 @@ To release, bump the version, commit and tag in one step, then push:
 ```bash
 pixi run -e dev tbump 0.1.0
 ```
+
+<!-- prettier-ignore-start -->
+[actions-badge]:            https://github.com/maniaclab/af-credmon/actions/workflows/ci.yml/badge.svg
+[actions-link]:             https://github.com/maniaclab/af-credmon/actions
+[github-discussions-badge]: https://img.shields.io/static/v1?label=Discussions&message=Ask&color=blue&logo=github
+[github-discussions-link]:  https://github.com/maniaclab/af-credmon/discussions
+[pypi-link]:                https://pypi.org/project/af-credmon/
+[pypi-platforms]:           https://img.shields.io/pypi/pyversions/af-credmon
+[pypi-version]:             https://img.shields.io/pypi/v/af-credmon
+[rtd-badge]:                https://readthedocs.org/projects/af-credmon/badge/?version=latest
+[rtd-link]:                 https://af-credmon.readthedocs.io/en/latest/?badge=latest
+[coverage-badge]:           https://codecov.io/github/maniaclab/af-credmon/branch/main/graph/badge.svg
+[coverage-link]:            https://codecov.io/github/maniaclab/af-credmon
+<!-- prettier-ignore-end -->

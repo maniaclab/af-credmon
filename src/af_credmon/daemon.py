@@ -22,7 +22,7 @@ import logging
 import os
 import signal
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -70,7 +70,7 @@ class Daemon:
 
     async def run_once(self) -> None:
         """One scan, plus (primary mode) the completion marker and the one-time ready message."""
-        await self._monitor.scan_once(now=datetime.now(timezone.utc))
+        await self._monitor.scan_once(now=datetime.now(UTC))
         if not self._primary:
             return
         (self._cred_dir / _COMPLETE_FILE).touch()

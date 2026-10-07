@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
 import pytest
@@ -15,7 +15,7 @@ from af_credmon.redeem import RedeemedCredential
 if TYPE_CHECKING:
     from pathlib import Path
 
-T0 = datetime(2026, 10, 7, 12, 0, tzinfo=timezone.utc)
+T0 = datetime(2026, 10, 7, 12, 0, tzinfo=UTC)
 
 
 class _FakeRedeemer:

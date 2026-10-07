@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import base64
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx2
 import pytest
@@ -22,7 +22,7 @@ from af_credmon.redeem import Redeemer
 
 _BROKER = "https://mcp.example.org"
 _EXPIRES = "2099-01-01T00:00:00+00:00"
-_EXPIRES_DT = datetime(2099, 1, 1, tzinfo=timezone.utc)
+_EXPIRES_DT = datetime(2099, 1, 1, tzinfo=UTC)
 
 _RESPONSES = {
     "x509": {

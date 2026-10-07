@@ -2,7 +2,7 @@
 authors = ["Giordon Stark <kratsg@gmail.com>"]
 name = "af-credmon"
 channels = ["conda-forge"]
-platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
+platforms = ["linux-64", "linux-aarch64", "osx-64", "osx-arm64"]
 preview = ["pixi-build"]
 
 [dependencies]
@@ -26,6 +26,18 @@ af-credentials = ">=0.3.2"
 httpx2 = ">=2.5.0,<3"
 python-htcondor = ">=24"
 
+[feature.py311.dependencies]
+python = "<3.12,>=3.11"
+
+[feature.py312.dependencies]
+python = "<3.13,>=3.12"
+
+[feature.py313.dependencies]
+python = "<3.14,>=3.13"
+
+[feature.py314.dependencies]
+python = "<3.15,>=3.14"
+
 [feature.test.dependencies]
 pytest = ">=8"
 pytest-cov = ">=5"
@@ -33,24 +45,55 @@ pytest-asyncio = ">=0.24"
 
 [feature.test.tasks]
 test = { cmd = "pytest", description = "Run tests" }
-test-cov = { cmd = "pytest --cov=af_credmon --cov-report=term", description = "Run tests with coverage" }
+test-cov = { cmd = "pytest --cov=af_credmon --cov-report=term --cov-report=html", description = "Run tests with coverage" }
+test-docstrings = { cmd = "pytest --doctest-modules src/af_credmon", description = "Run doctests in source modules" }
+test-all = { cmd = "pytest --cov=af_credmon", description = "Run all tests with coverage" }
+
+[feature.docs.dependencies]
+zensical = "*"
+lychee = "*"
+pydocstyle = "*"
+
+[feature.docs.tasks]
+docs-build = { cmd = "zensical build", description = "Build documentation (static)", inputs = ["src/", "docs/", "zensical.toml"], outputs = ["site"] }
+docs-linkcheck = { cmd = "lychee docs/", description = "Check documentation for broken links" }
+docs-serve = { cmd = "zensical serve", depends-on = ["docs-build"], description = "Build and serve documentation" }
+docs-clean = { cmd = "rm -rf site", description = "Clean documentation build artifacts", inputs = ["site"] }
+check-docstrings = { cmd = "pydocstyle --add-ignore=D104,D105,D107 src/af_credmon/", description = "Check docstring style" }
 
 [feature.dev.dependencies]
 prek = "*"
+identify = ">=1.4.20"  # ruff-check
+pylint = ">=3.2"
+tbump = ">=6.7.0"
 mypy = "*"
 ruff = "*"
-tbump = ">=6.7.0"
+python-build = "*"
+twine = "*"
 pytest = ">=8"
 pytest-asyncio = ">=0.24"
 
 [feature.dev.tasks]
 pre-commit = { cmd = "prek run --all-files", description = "Run pre-commit hooks on all files" }
+pylint = { cmd = "pylint af_credmon", description = "Run PyLint on af-credmon package" }
 typecheck = { cmd = "mypy", description = "Type-check src and tests" }
+pre-commit-install = { cmd = "prek install", description = "Install pre-commit git hooks" }
+pre-commit-update = { cmd = "prek update", description = "Update pre-commit hook versions" }
+build-clean = { cmd = "rm -rf build dist", description = "Clean build artifacts" }
+build = { cmd = "python -m build", depends-on = ["build-clean"], description = "Build SDist and wheel distributions", outputs = ["dist"] }
+build-check = { cmd = "twine check --strict ./dist/*", depends-on = ["build"], description = "Run twine to check" }
 
 [environments]
+docs = ["docs"]
+dev = ["dev"]
 test = ["test"]
-dev = ["dev", "test"]
+py311 = ["test", "py311"]
+py312 = ["test", "py312"]
+py313 = ["test", "py313"]
+py314 = ["test", "py314"]
 
 [tasks]
-lint = { depends-on = ["pre-commit"], description = "Run all linting" }
-check = { depends-on = ["lint", "test"], description = "Lint + tests" }
+# Composite tasks that span multiple features
+lint = { depends-on = ["pre-commit", "pylint"], description = "Run all linting (pre-commit + pylint)" }
+check = { depends-on = ["lint", "test"], description = "Quick check: lint + basic tests" }
+check-all = { depends-on = ["lint", "test-all"], description = "Comprehensive check: lint + all tests" }
