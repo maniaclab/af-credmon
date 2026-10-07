@@ -118,7 +118,8 @@ For every `<creddir>/<user>/<prefix><kind>.top` (kinds `x509`, `krb5`,
   linked), and any `af_*.use` whose `.top` credd has deleted;
 - **keep** the existing `.use` on any other failure (broker outage, expired top
   token) and retry on the next scan, so running jobs never lose a still-valid
-  credential.
+  credential -- unless its credential has itself expired, in which case it is
+  removed.
 
 Files without the prefix belong to other credmons and are never touched. Nothing
 besides `.use` files (and, in primary mode, `pid` and `CREDMON_COMPLETE`) is
