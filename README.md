@@ -1,4 +1,4 @@
-# af-credmon v0.0.0
+# af-credmon v0.1.0
 
 An HTCondor credential monitor (credmon) that places a user's AF MCP broker-held
 credentials -- x509/VOMS proxy, CERN Kerberos ticket, ServiceX access token --
