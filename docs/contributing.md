@@ -51,8 +51,8 @@ pixi run docs-serve      # build and serve docs locally
   (`httpx2.MockTransport`)
 - `tests/test_monitor.py`: renewal timing, 404 removal, failure isolation,
   orphan cleanup
-- `tests/test_daemon.py`: primary/alongside bookkeeping, SIGHUP wake,
-  readiness, logging
+- `tests/test_daemon.py`: primary/alongside bookkeeping, SIGHUP wake, readiness,
+  logging
 - `tests/test_cli_integration.py`: the installed `af-credmon` script as a
   subprocess against a local broker stand-in
 
@@ -63,5 +63,5 @@ pixi run -e dev tbump X.Y.Z   # bumps, commits and tags vX.Y.Z
 git push --follow-tags
 ```
 
-Then publish a GitHub release for the tag; the CD workflow builds the sdist
-and wheel and publishes them to PyPI through trusted publishing.
+Then publish a GitHub release for the tag; the CD workflow builds the sdist and
+wheel and publishes them to PyPI through trusted publishing.
