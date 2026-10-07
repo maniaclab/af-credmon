@@ -1,4 +1,4 @@
-# af-credmon
+# af-credmon v0.0.0
 
 An HTCondor credential monitor (credmon) that places a user's AF MCP broker-held
 credentials -- x509/VOMS proxy, CERN Kerberos ticket, ServiceX access token --
@@ -118,4 +118,10 @@ access point; it writes credentials into the ShadowLog.
 pixi run -e dev pytest     # unit + integration tests
 pixi run -e dev typecheck  # mypy
 pixi run lint              # pre-commit hooks
+```
+
+To release, bump the version, commit and tag in one step, then push:
+
+```bash
+pixi run -e dev tbump 0.1.0
 ```
