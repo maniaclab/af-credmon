@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+env:
+  FORCE_COLOR: 3
+
+jobs:
+  pre-commit:
+    name: Format
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # checkout only
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: prefix-dev/setup-pixi@f00437f565399d418b0acc85936d12c1fb668347 # v0.10.1
+        with:
+          pixi-version: v0.68.1
+          cache: true
+          cache-key: dev
+          cache-write:
+            ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+          environments: dev
+
+      - name: Run pre-commit
+        run: pixi run -e dev pre-commit --stage manual
+
+      - name: Type-check
+        run: pixi run -e dev typecheck
+
+  checks:
+    name: Tests on ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.runs-on }}
+    needs: [pre-commit]
+    permissions:
+      contents: read # checkout only
+    strategy:
+      fail-fast: false
+      matrix:
+        # The credmon runs on Linux access points; macOS covers local dev.
+        runs-on: [ubuntu-latest, macos-14]
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: prefix-dev/setup-pixi@f00437f565399d418b0acc85936d12c1fb668347 # v0.10.1
+        with:
+          pixi-version: v0.68.1
+          cache: true
+          cache-key: test-${{ github.ref_name }}
+          cache-write:
+            ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+          environments: test
+
+      - name: Test package
+        run: pixi run -e test test-cov --durations=20
