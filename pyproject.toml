@@ -94,8 +94,9 @@ module = "af_credmon.*"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
+# The HTCondor Python bindings ship no type information.
 [[tool.mypy.overrides]]
-module = ["htcondor2", "htcondor2.*"]
+module = ["htcondor2"]
 ignore_missing_imports = true
 
 [tool.ruff]
