@@ -14,6 +14,8 @@ concurrency:
 permissions: {}
 
 env:
+  # Many color libraries just need this to be set to any value, but at least
+  # one distinguishes color depth, where "3" -> "256-bit color".
   FORCE_COLOR: 3
 
 jobs:
@@ -38,13 +40,13 @@ jobs:
           environments: dev
 
       - name: Run pre-commit
-        run: pixi run -e dev pre-commit --stage manual
+        run: pixi run pre-commit --stage manual
 
-      - name: Type-check
-        run: pixi run -e dev typecheck
+      - name: Run PyLint
+        run: pixi run pylint --output-format=github
 
   checks:
-    name: Tests on ${{ matrix.runs-on }}
+    name: Check Python ${{ matrix.python-version }} on ${{ matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
     needs: [pre-commit]
     permissions:
@@ -52,8 +54,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The credmon runs on Linux access points; macOS covers local dev.
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
         runs-on: [ubuntu-latest, macos-14]
+        include:
+          - python-version: "3.11"
+            pixi-environment: py311
+          - python-version: "3.12"
+            pixi-environment: py312
+          - python-version: "3.13"
+            pixi-environment: py313
+          - python-version: "3.14"
+            pixi-environment: py314
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -65,10 +76,26 @@ jobs:
         with:
           pixi-version: v0.68.1
           cache: true
-          cache-key: test-${{ github.ref_name }}
+          cache-key: ${{ matrix.pixi-environment }}-${{ github.ref_name }}
           cache-write:
             ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-          environments: test
+          environments: ${{ matrix.pixi-environment }}
 
       - name: Test package
-        run: pixi run -e test test-cov --durations=20
+        run: >-
+          pixi run -e "$PIXI_ENVIRONMENT" test-all -ra --cov-branch
+          --cov-report=xml --cov-report=term --junitxml=junit.xml -o
+          junit_family=legacy --durations=20
+        env:
+          PIXI_ENVIRONMENT: ${{ matrix.pixi-environment }}
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

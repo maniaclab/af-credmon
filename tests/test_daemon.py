@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 import pytest
@@ -135,7 +135,7 @@ async def test_scan_times_are_timezone_aware_utc(tmp_path: Path) -> None:
 
     await daemon.run_once()
 
-    assert monitor.scans[0].tzinfo == timezone.utc
+    assert monitor.scans[0].tzinfo == UTC
 
 
 def test_parse_args_requires_broker_url_and_defaults(tmp_path: Path) -> None:
