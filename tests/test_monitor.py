@@ -181,3 +181,37 @@ async def test_orphaned_use_file_is_removed(
     assert report.removed == 1
     assert not (tmp_path / "alice" / "af_krb5.use").exists()
     assert (tmp_path / "alice" / "scitokens.use").exists()
+
+
+async def test_expired_credential_is_removed_when_refresh_fails(
+    tmp_path: Path, redeemer: _FakeRedeemer
+) -> None:
+    """Once the top token itself expires (e.g. the user unlinked and the storer
+    stopped refreshing it), the broker answers 401 rather than 404. A .use whose
+    credential has already expired is useless to jobs and must not linger."""
+    _top(tmp_path, "alice", "krb5", "tok-a")
+    monitor = _monitor(tmp_path, redeemer)
+    await monitor.scan_once(now=T0)
+
+    redeemer.errors["tok-a"] = ProxyRedeemError(
+        401, "Invalid or expired broker identity token"
+    )
+    report = await monitor.scan_once(now=T0 + timedelta(hours=3, minutes=1))
+
+    assert report.removed == 1
+    assert report.failed == 1
+    assert not (tmp_path / "alice" / "af_krb5.use").exists()
+
+
+async def test_expired_credential_is_removed_when_top_file_is_unreadable(
+    tmp_path: Path, redeemer: _FakeRedeemer
+) -> None:
+    top = _top(tmp_path, "alice", "krb5", "tok-a")
+    monitor = _monitor(tmp_path, redeemer)
+    await monitor.scan_once(now=T0)
+
+    top.write_text("not json")
+    report = await monitor.scan_once(now=T0 + timedelta(hours=4))
+
+    assert report.removed == 1
+    assert not (tmp_path / "alice" / "af_krb5.use").exists()

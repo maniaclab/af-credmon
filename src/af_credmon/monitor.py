@@ -103,9 +103,19 @@ class CredentialMonitor:
             report.removed += 1
         except (ProxyRedeemError, TopFileError, OSError) as exc:
             # Broker outage, expired top token, unreadable file: keep any
-            # existing .use (it may still be valid) and retry next scan.
+            # existing .use while it may still be valid, and retry next scan.
             log.error("refreshing %s for %s failed: %s", top.kind, top.user, exc)  # noqa: TRY400
             report.failed += 1
+            issued = self._issued.get(top.use_path)
+            if issued is not None and issued.expires_at <= now:
+                # Its credential has expired, so it can only hand jobs a dead
+                # one. (After a restart nothing is known about an existing
+                # .use's expiry, so it is kept until a refresh succeeds or
+                # the broker answers 404.)
+                log.warning("removing expired %s for %s", top.kind, top.user)
+                remove_use_file(top.use_path)
+                self._issued.pop(top.use_path, None)
+                report.removed += 1
         else:
             self._issued[top.use_path] = _Issued(
                 redeemed_at=now, expires_at=cred.expires_at
