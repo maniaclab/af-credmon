@@ -284,7 +284,9 @@ def test_job_sees_credentials_redeemed_by_af_credmon(pool: _Pool) -> None:
     # credd SIGHUPs whatever pid the credmon wrote into the credential
     # directory: af-credmon must own it.
     pid_file = pool.cred_dir / "pid"
-    assert _wait_for(pid_file.exists, timeout=30)
+    assert _wait_for(pid_file.exists, timeout=30), (
+        f"af-credmon never wrote {pid_file}\n{pool.logs()}"
+    )
     credmon_pid = pid_file.read_text().strip()
     cmdline = Path(f"/proc/{credmon_pid}/cmdline").read_bytes()
     assert b"af-credmon" in cmdline
