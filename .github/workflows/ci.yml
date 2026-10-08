@@ -130,6 +130,13 @@ jobs:
           sudo systemctl stop condor
           condor_version
 
+      # condor_master starts the credmon as the condor user, which needs to
+      # reach the pixi environment under the runner's home directory.
+      - name: Let condor reach the pixi environment
+        run: |
+          ls -ld "$HOME"
+          chmod o+x "$HOME"
+
       # The pool runs as root; sudo sets SUDO_USER, the job's submitter. A
       # skip here would mean the job tested nothing, so require a pass.
       - name: Run end-to-end test
