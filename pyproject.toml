@@ -69,6 +69,9 @@ strict = true
 filterwarnings = [
   "error",
 ]
+markers = [
+  "e2e: needs an installed HTCondor and root; see tests/test_e2e_htcondor.py",
+]
 log_level = "INFO"
 testpaths = [
   "tests",
@@ -124,7 +127,7 @@ ignore = [
 "tests/**" = ["T20", "PLC0415"]
 
 [tool.codespell]
-ignore-words-list = "ccache"
+ignore-words-list = "ccache,startd"
 
 [tool.pylint]
 py-version = "3.11"
