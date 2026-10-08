@@ -71,6 +71,21 @@ CREDMON_OAUTH = /opt/af-credmon/.pixi/envs/default/bin/af-credmon
 CREDMON_OAUTH_ARGS = --broker-url https://mcp.example.org --log-file $(LOG)/AfCredmonLog
 ```
 
+credd creates each user's subdirectory with condor privileges, so the credential
+directory must be group-writable by condor, as HTCondor's RPMs create it:
+
+```bash
+install -d -m 2770 -o root -g condor /var/lib/condor/oauth_credentials
+```
+
+condor_master also needs the condor user to reach the af-credmon executable: an
+install under a private home directory fails with
+`Cannot execute (errno=13, Permission denied)` in the MasterLog.
+
+The broker stores each top token on the user's behalf, the equivalent of
+`condor_store_cred add-oauth -s af_<kind> -u <user>@<UID_DOMAIN> -i <file>`;
+credd accepts that only from a `CRED_SUPER_USERS` identity.
+
 This is **primary mode** (the default): af-credmon is the credmon credd talks
 to. It owns `<creddir>/pid` (credd sends SIGHUP after every store, which
 triggers an immediate rescan), touches `CREDMON_COMPLETE` after each scan, and

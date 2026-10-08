@@ -99,3 +99,48 @@ jobs:
         uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  e2e:
+    name: End-to-end against HTCondor
+    runs-on: ubuntu-latest
+    needs: [pre-commit]
+    permissions:
+      contents: read # checkout only
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: prefix-dev/setup-pixi@d3f436a425481402e6a95a1d1fc10331c708cd9e # v0.10.2
+        with:
+          pixi-version: v0.68.1
+          cache: true
+          cache-key: py313-${{ github.ref_name }}
+          cache-write:
+            ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+          environments: py313
+
+      # The test starts its own pool from a private CONDOR_CONFIG; the
+      # system one the installer starts is not needed.
+      - name: Install HTCondor
+        run: |
+          curl -fsSL https://get.htcondor.org | sudo GET_HTCONDOR_PASSWORD="$(openssl rand -base64 32)" /bin/bash -s -- --no-dry-run
+          sudo systemctl stop condor
+          condor_version
+
+      # condor_master starts the credmon as the condor user, which needs to
+      # reach the pixi environment under the runner's home directory.
+      - name: Let condor reach the pixi environment
+        run: |
+          ls -ld "$HOME"
+          chmod o+x "$HOME"
+
+      # The pool runs as root; sudo sets SUDO_USER, the job's submitter. A
+      # skip here would mean the job tested nothing, so require a pass.
+      - name: Run end-to-end test
+        run: |
+          sudo env "PATH=$(pixi run -e py313 printenv PATH)" \
+            pytest tests/test_e2e_htcondor.py -ra --durations=5 | tee e2e.log
+          grep -q " 1 passed" e2e.log
