@@ -76,6 +76,21 @@ to. It owns `<creddir>/pid` (credd sends SIGHUP after every store, which
 triggers an immediate rescan), touches `CREDMON_COMPLETE` after each scan, and
 sends condor_master its ready message after the first one.
 
+### Submit hosts without a local credd
+
+Login nodes that submit to the access point's schedd (via `SCHEDD_HOST`) also
+need to know where credd is:
+
+```
+CREDD_HOST = <access point hostname>
+```
+
+`condor_submit` checks `use_oauth_services` credentials against credd before
+submitting, and in HTCondor 25.0 that check uses the default credd lookup
+(`CREDD_HOST`, otherwise the local host) rather than the credd the schedd
+advertises. Without it, submits from those hosts fail with
+`CRED: locate(credd) failed!`.
+
 ### Next to an existing credmon
 
 If the access point already runs `condor_credmon_oauth` (for SciTokens, an
