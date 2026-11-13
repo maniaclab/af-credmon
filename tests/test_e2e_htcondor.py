@@ -36,6 +36,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import htcondor2
 import pytest
 
 if TYPE_CHECKING:
@@ -139,6 +140,17 @@ def _wait_for(predicate: Callable[[], bool], timeout: float) -> bool:
             return True
         time.sleep(0.1)
     return False
+
+
+def _startd_unclaimed(collector: str) -> bool:
+    """Whether the pool at *collector* advertises a slot ready to run a job."""
+    try:
+        ads = htcondor2.Collector(collector).query(
+            htcondor2.AdType.Startd, projection=["State"]
+        )
+    except htcondor2.HTCondorException:  # the collector is not up yet
+        return False
+    return any(ad.get("State") == "Unclaimed" for ad in ads)
 
 
 class _Pool:
@@ -248,7 +260,12 @@ CREDMON_OAUTH_ARGS = --broker-url {broker_url} --log-file $(LOG)/AfCredmonLog --
     )
     pool = _Pool(local_dir, env)
     try:
-        pool.run("condor_who", "-wait:60", 'IsReady && STARTD_State =?= "Ready"')
+        # condor_who -wait exits 0 even when it times out, so ask the
+        # collector directly and fail here, with the logs, if the pool never
+        # becomes ready.
+        assert _wait_for(lambda: _startd_unclaimed(f"127.0.0.1:{port}"), timeout=60), (
+            f"the pool never advertised an Unclaimed slot\n{pool.logs()}"
+        )
         yield pool
     finally:
         master.send_signal(signal.SIGQUIT)  # fast shutdown of every daemon
